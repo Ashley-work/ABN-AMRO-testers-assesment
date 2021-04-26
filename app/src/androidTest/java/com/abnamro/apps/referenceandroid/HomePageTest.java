@@ -1,50 +1,65 @@
 package com.abnamro.apps.referenceandroid;
 
-
-import android.view.View;
-import android.view.ViewGroup;
-
-import androidx.test.espresso.ViewInteraction;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.rule.GrantPermissionRule;
 
-import com.abnamro.apps.referenceandroid.pages.home.HomeMenu;
 import com.abnamro.apps.referenceandroid.pages.home.HomePage;
+import com.abnamro.apps.referenceandroid.utils.CustomFailureHandler;
 
-
-import org.hamcrest.core.IsInstanceOf;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
-import static androidx.test.espresso.matcher.ViewMatchers.withParent;
-import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static org.hamcrest.Matchers.allOf;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
+/**
+ * Testsuite for tests regarding the homePage, only knows what test to execute while leaving the impl to HomePageObject
+ */
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class HomePageTest {
-    HomePage homePage;
-    @Rule
-    public ActivityScenarioRule<MainActivity> mActivityTestRule = new ActivityScenarioRule<>(MainActivity.class);
+    private static HomePage homePage;
+    private ActivityScenarioRule<MainActivity> mActivityTestRule;
+    private CustomFailureHandler mScreenshotTestRule;
+    private GrantPermissionRule mGrantPermissionRule;
 
-    @Before
-    public void initialize() {
+    @Rule
+    public TestRule chain =
+            RuleChain.outerRule(mGrantPermissionRule = GrantPermissionRule.grant(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
+                    .around(mActivityTestRule = new ActivityScenarioRule<>(MainActivity.class))
+                    .around(mScreenshotTestRule = new CustomFailureHandler());
+
+    // TODO: executed once in whole suite, but requires the method and by extension field to be static, find a nicer solution
+    @BeforeClass
+    public static void initialize() {
         homePage = new HomePage();
     }
 
+    // start suite with visibility test before interacting with them
     @Test
-    public void mainActivityTest() throws InterruptedException {
-        homePage.clickButton(homePage.getWelcomeText());
-        homePage.clickButton(homePage.getMessageIcon());
-        homePage.viewIsShown(homePage.getClickMessageIconText());
+    public void welcomeTextVisibilityTest() {
+        homePage.welcomeTextViewIsDisplayed();
     }
+
+    @Test
+    public void messageIconVisibilityTest() {
+        homePage.messageIconViewIsDisplayed();
+    }
+
+    // start interactions
+    @Test
+    public void clickMessageIconAndReplaceActionVisibilityTest() {
+        homePage
+                .clickMessageIcon()
+                .replaceActionViewIsDisplayed();
+    }
+
+    //TODO: add tests which checks on the absence of certain elements/default values
 }

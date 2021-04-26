@@ -3,29 +3,56 @@ package com.abnamro.apps.referenceandroid;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.rule.GrantPermissionRule;
+
 import com.abnamro.apps.referenceandroid.pages.home.HomeMenu;
-import org.junit.Before;
+import com.abnamro.apps.referenceandroid.utils.CustomFailureHandler;
+
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
+/**
+ * Testsuite for tests regarding the homeMenu, only knows what test to execute while leaving the impl to HomeMenuObject
+ */
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class HomeMenuTest {
-    HomeMenu homeMenu;
+    private static HomeMenu homeMenu;
+    private ActivityScenarioRule<MainActivity> mActivityTestRule;
+    private CustomFailureHandler mScreenshotTestRule;
+    private GrantPermissionRule mGrantPermissionRule;
 
     @Rule
-    public ActivityScenarioRule<MainActivity> mActivityTestRule = new ActivityScenarioRule<>(MainActivity.class);
+    public TestRule chain =
+            RuleChain.outerRule(mGrantPermissionRule = GrantPermissionRule.grant(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE))
+                    .around(mActivityTestRule = new ActivityScenarioRule<>(MainActivity.class))
+                    .around(mScreenshotTestRule = new CustomFailureHandler());
 
-    @Before
-    public void initialize() {
+    // TODO: executed once in whole suite, but requires the method and by extension field to be static, find a nicer solution
+    @BeforeClass
+    public static void initialize() {
         homeMenu = new HomeMenu();
     }
 
     @Test
-    public void mainActivityTest() throws InterruptedException {
-        homeMenu.viewIsShown(homeMenu.getAppName());
-        homeMenu.clickKebabMenu();
-        homeMenu.viewIsShown(homeMenu.getSettingsMenuItem());
+    public void appNameVisibilityTest() {
+        homeMenu.getAppNameMenuTextViewIsDisplayed();
     }
+
+    @Test
+    public void clickKebabAndSettingsVisibilityTest() {
+        homeMenu
+                .clickHomeKebabMenu()
+                .getSettingsMenuItemViewIsDisplayed()
+                .clickSettingsMenuItem();
+    }
+
 }
