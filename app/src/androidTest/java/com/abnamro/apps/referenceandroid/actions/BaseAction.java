@@ -33,7 +33,6 @@ public abstract class BaseAction {
 
     public void clickButton(ViewInteraction vi) {
         vi.perform(click());
-        viewIsShown(vi);
     }
 
     public void viewIsShown(ViewInteraction vi) {
